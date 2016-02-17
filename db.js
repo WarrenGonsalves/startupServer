@@ -16,3 +16,6 @@ exports.db = db;
 exports.user = models.user;
 exports.studio = models.studio;
 exports.logger = models.logger;
+exports.plan = models.plan;
+exports.coworkingSpace = models.coworkingSpace;
+exports.accessControl = models.accessControl;

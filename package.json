@@ -21,6 +21,7 @@
     "bcrypt": "0.8.5",
     "bcrypt-nodejs": "0.0.3",
     "cron": "1.1.0",
+    "email-validator": "^1.0.4",
     "faker": "^2.1.1",
     "hapi": "13.0.0",
     "hat": "0.0.3",

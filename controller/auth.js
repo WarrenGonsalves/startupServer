@@ -37,7 +37,7 @@ AuthController.prototype.postLogin = {
     handler: function(request, reply) {
       console.log("login");
       if (!request.payload.key || !request.payload.password) 
-        return util.reply.authError('Wrong access credentials', reply);
+        return util.reply.authError('Wrong access credentials1', reply);
       var query_param = {};
       var key = request.payload.key;
       if (key.indexOf('@') > 0) {
@@ -51,7 +51,7 @@ AuthController.prototype.postLogin = {
       console.log(request.payload.password)
       db.user.findOne(query_param, '+password', function(err, user) {
         if (!user) {
-          return util.reply.authError('Wrong access credentials', reply);
+          return util.reply.authError('Wrong access credentials2', reply);
         }
         // console.log(user);
         // bcrypt.genSalt(10, function(err, salt) {
@@ -62,7 +62,7 @@ AuthController.prototype.postLogin = {
         // });
         user.comparePassword(request.payload.password, function(err, isMatch) {
           if (!isMatch) {
-            return util.reply.authError('Wrong access credentials', reply);
+            return util.reply.authError('Wrong access credentials3', reply);
           }
           else{
             console.log("LOGIN SUCCESS");
@@ -95,10 +95,10 @@ AuthController.prototype.changePassword = function(request, reply) {
                       if(err)
                           util.reply.error(err, reply);
                       else{
-                        if (user.email)
-                          util.email.sendPasswordChange(user.name, user.phone);
-                        if (user.phone) 
-                          util.sms.sendPasswordChange(user.name, user.phone);
+                        // if (user.email)
+                        //   util.email.sendPasswordChange(user.name, user.phone);
+                        // if (user.phone) 
+                        //   util.sms.sendPasswordChange(user.name, user.phone);
                         var result = {
                           message: "Password changed"
                         }
@@ -179,7 +179,7 @@ AuthController.prototype.ensureAuthenticatedUser = function (request, reply) {
     return util.reply.authFail('Token has expired. Please login again.', reply);
   }
   user = payload.sub;
-  db.user.findById(user, function (err, user) {
+  db.user.findById(user,'+type', function (err, user) {
     if (err) {
       return util.reply.authFail("Invalid token", reply);   
     }else if (!user) {
