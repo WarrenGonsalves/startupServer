@@ -9,11 +9,11 @@ var coworkingSpaceSchema = new Schema({
 	type: String,
 	address: String,
 	logos: [String],
-	paymentSalts: String
-
+	paymentSalts: String,
+	amenities: {type: mongoose.Schema.Types.Mixed}
 })
 
 
 // export
-module.exports = mongoose.model('coworking', coworkingSpaceSchema);
+module.exports = mongoose.model('coworkingSpace', coworkingSpaceSchema);
 module.exports.schema = coworkingSpaceSchema;
