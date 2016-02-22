@@ -10,6 +10,7 @@ var coworkingSpaceSchema = new Schema({
 	address: String,
 	logos: [String],
 	paymentSalts: String,
+	active: Boolean,
 	amenities: {type: mongoose.Schema.Types.Mixed}
 })
 

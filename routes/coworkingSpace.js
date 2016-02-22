@@ -1,4 +1,4 @@
-var BASE_URL = '/coworkingSpace/amenities';
+var BASE_URL = '/coworkingSpace';
 var CoworkingSpaceController = require('../controller/coworkingSpace');
 var AuthController = require('../controller/auth');
 
@@ -6,7 +6,7 @@ module.exports = function(){
   return [
     {
       method: 'GET',
-      path: BASE_URL,
+      path: BASE_URL + '/amenities',
       config: {
         pre: [
           { method: AuthController.ensureAuthenticatedUser, assign: 'user'}
@@ -26,7 +26,7 @@ module.exports = function(){
     // },
     {
       method: 'POST',
-      path: BASE_URL + '/add',
+      path: BASE_URL + '/amenities/add',
       config: {
         pre: [
           {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
@@ -36,7 +36,7 @@ module.exports = function(){
     },
     {
       method: 'POST',
-      path: BASE_URL + '/update',
+      path: BASE_URL + '/amenities/update',
       config: {
         pre: [
           {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
@@ -46,13 +46,23 @@ module.exports = function(){
     },
     {
       method: 'POST',
-      path: BASE_URL + '/delete',
+      path: BASE_URL + '/amenities/delete',
       config: {
         pre: [
           {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
         ]
       },
       handler: CoworkingSpaceController.deleteAmenities
-    }
+    },
+    {
+      method: 'POST',
+      path: BASE_URL + '/update',
+      config: {
+        pre: [
+          {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
+        ]
+      },
+      handler: CoworkingSpaceController.updateCoworkingSpace
+    },
   ];
 }();

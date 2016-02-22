@@ -12,23 +12,48 @@ CoworkingSpaceController.prototype.getAmenities = function(request, reply){
   console.log("In CoworkingSpaceController getAmenities");
 
   AccessControlController.validateAccessMid(requestRights, request.pre, function (rights) {
-    console.log(rights);
     if (rights.status != 200)
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
-      //if user is orguser
-      db.user.findById(request.pre.user.orgUserId).exec(function(err, user){
-        console.log(user.ballanceAmenities);
-        if(!user.ballanceAmenities) return util.reply.error("ballanceAmenities null");
-        if (err) {
-          util.reply.error(err, reply);
-          return;
-        }
-        if(user.ballanceAmenities)
+      db.user.findById(request.pre.user._id).exec(function(err, user){
+        if(user.type == "ORG" || user.type == "COW"){
+          if(!user.ballanceAmenities) return util.reply.error("ballanceAmenities null");
+          if (err) {
+            util.reply.error(err, reply);
+            return;
+          }
           reply({
             amenitiesList: user.ballanceAmenities
           });
-      });
+        }
+        if(user.type == "OCO"){
+          db.user.findById(user.orgUserId).exec(function(err, userOrg){
+            if(!userOrg.ballanceAmenities) return util.reply.error("ballanceAmenities null");
+            if (err) {
+              util.reply.error(err, reply);
+              return;
+            }
+            reply({
+              amenitiesList: userOrg.ballanceAmenities
+            });
+          })
+        }
+        if(user.type == "MGR" || user.type == "ADM"){
+          if(request.query.user_id){
+            db.user.findOne(request.query.user_id).exec(function(err, user){
+              if(!user) return util.reply.error("User not found", reply);
+              if(!user.ballanceAmenities) return util.reply.error("ballanceAmenities null");
+              if (err) {
+                util.reply.error(err, reply);
+                return;
+              }
+              reply({
+                amenitiesList: user.ballanceAmenities
+              });
+            })
+          }else return util.reply.error("query not found", reply);
+        }
+    });
 
     }else return util.reply.error("Unauthorized", reply);
 
@@ -37,7 +62,7 @@ CoworkingSpaceController.prototype.getAmenities = function(request, reply){
 
 CoworkingSpaceController.prototype.addAmenities = function(request, reply){
   var requestRights = {
-    task: "ADD_AMENITIES"
+    task: "ADD_AMENITY"
   }
   console.log("In CoworkingSpaceController addAmenities");
 
@@ -47,20 +72,20 @@ CoworkingSpaceController.prototype.addAmenities = function(request, reply){
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
       if(rights.result.viewLevel < 3){
-        console.log("rights less dan 3");
         return util.reply.error("You do not have access", reply);
       }
       if(rights.result.viewLevel == 3){
         db.coworkingSpace.findById(request.pre.user.coworkingId).exec(function(err, coworking){
           if (err) return util.reply.error(err, reply);
-          if(!coworking) return util.reply.erro("coworking not found", reply);
-          console.log(request.pre.user.coworkingId);
-          //check if amenities already exist
+          if(!coworking) return util.reply.error("coworking not found", reply);
           var name = request.payload.name;
-          // var push = {};
-          // push[name] = request.payload.value;
-          // coworking.amenities.push(push);
-          coworking.amenities[name] = request.payload.value;
+          if(coworking.amenities){
+            var amenities = coworking.amenities;
+          }else var amenities = {};
+          if(amenities[name]) return util.reply.error("amenities already exists", reply);
+          amenities[name] = request.payload.value;
+          coworking.amenities = {};
+          coworking.amenities = amenities;
           coworking.save(function (err, coworking) {
               if (err) {
                   util.logger.err("coworkingSpace", ["coworkingSpace save error in add amenities", err]);
@@ -72,21 +97,24 @@ CoworkingSpaceController.prototype.addAmenities = function(request, reply){
       }
 
       if(rights.result.viewLevel > 3){
-        db.coworkingSpace.findOne({name: request.payload.coworkingSpaceName}).exec(function(err, coworkingSpace){
-          console.log(coworkingSpace)
+        db.coworkingSpace.findOne({name: request.payload.coworkingSpaceName}).exec(function(err, coworking){
           if (err) return util.reply.error(err, reply);
-          if (!coworkingSpace) return util.reply.error("Invalid coworkingSpace name", reply);
+          if (!coworking) return util.reply.error("Invalid coworkingSpace name", reply);
           //check if amenities already exist
           var name = request.payload.name;
-          var push = {};
-          push[name] = request.payload.value;
-          coworkingSpace.amenities.push(push);
-          coworkingSpace.save(function (err, coworkingSpace) {
+          if(coworking.amenities){
+            var amenities = coworking.amenities;
+          }else var amenities = {};
+          if(amenities[name]) return util.reply.error("amenities already exists", reply);
+          amenities[name] = request.payload.value;
+          coworking.amenities = {};
+          coworking.amenities = amenities;
+          coworking.save(function (err, coworking) {
               if (err) {
                   util.logger.err("coworkingSpace", ["coworkingSpace save error in add amenities", err]);
                   util.reply.error(err, reply);
               };
-              reply(coworkingSpace);
+              reply(coworking);
           });
         })
       }
@@ -97,7 +125,7 @@ CoworkingSpaceController.prototype.addAmenities = function(request, reply){
 
 CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
   var requestRights = {
-    task: "UPD_AMENITIES"
+    task: "UPD_AMENITY"
   }
   console.log("In CoworkingSpaceController updateAmenities");
 
@@ -107,7 +135,6 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
       if(rights.result.viewLevel < 3){
-        console.log("rights less dan 3");
         return util.reply.error("You do not have access", reply);
       }
       if(rights.result.viewLevel == 3 ){
@@ -118,10 +145,7 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
           var updatedValue = request.payload.value;
           if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
           coworking.amenities[amenitiesKey] = request.payload.value;
-          // coworking.amenities.update({}, {'$set': {
-          //   'amenities.$.amenitiesKey': updatedValue
-          // }})
-          coworking.save(function (err, coworkingSpace) {
+          coworking.save(function (err, coworking) {
               if (err) {
                   util.logger.err("coworkingSpace", ["coworkingSpace save error in updateAmenities", err]);
                   util.reply.error(err, reply);
@@ -131,22 +155,19 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
         });
       }
       if(rights.result.viewLevel > 3 ){
-        db.coworkingSpace.findOne({name: request.payload.name}, function (err, coworkingSpace) {
+        db.coworkingSpace.findOne({name: request.payload.name}, function (err, coworking) {
           if (err) return util.reply.error(err, reply);
-          if (!coworkingSpace) return util.reply.error("Invalid coworkingSpace name", reply);
-          console.log(coworkingSpace);
+          if (!coworking) return util.reply.error("Invalid coworkingSpace name", reply);
           var amenitiesKey = request.payload.amenitiesKey;
           var updatedValue = request.payload.updatedValue;
           if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
-          coworkingSpace.update({}, {'$set': {
-            'amenities.$.amenitiesKey': updatedValue
-          }})
-          coworkingSpace.save(function (err, coworkingSpace) {
+          coworking.amenities[amenitiesKey] = request.payload.value;
+          coworking.save(function (err, coworking) {
               if (err) {
                   util.logger.err("coworkingSpace", ["coworkingSpace save error", err]);
                   util.reply.error(err, reply);
               };
-              reply(coworkingSpace);
+              reply(coworking);
           });
         });
       }
@@ -158,7 +179,7 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
 
 CoworkingSpaceController.prototype.deleteAmenities = function(request, reply) {
   var requestRights = {
-    task: "DEL_AMENITIES"
+    task: "DEL_AMENITY"
   }
   AccessControlController.validateAccessMid(requestRights, request.pre, function (rights) {
     if (rights.status != 200)
@@ -166,14 +187,10 @@ CoworkingSpaceController.prototype.deleteAmenities = function(request, reply) {
     if(rights.result.access){
       if(rights.result.viewLevel > 2){
         db.coworkingSpace.findById(request.pre.user.coworkingId).exec(function(err, coworking){
-          console.log(request.pre.user.coworkingId);
           var amenitiesKey = request.payload.name;
           if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
-          // coworkingSpace.update({}, {'$pull': {
-          //   'amenities.$.amenitiesKey': ''
-          // }})
-          coworking.amenities[amenitiesKey].remove();
-          coworking.save(function (err, coworkingSpace) {
+          delete coworking.amenities[amenitiesKey];
+          coworking.save(function (err, coworking) {
               if (err) {
                   util.logger.err("coworkingSpace", ["coworkingSpace save error", err]);
                   util.reply.error(err, reply);
@@ -181,6 +198,42 @@ CoworkingSpaceController.prototype.deleteAmenities = function(request, reply) {
               reply(coworking);
           });
         })
+      }
+    }else return util.reply.error("Unauthorized", reply);
+  })
+};
+
+CoworkingSpaceController.prototype.updateCoworkingSpace = function(request, reply){
+  var requestRights = {
+    task: "UPD_COWORKINGSPACE"
+  }
+  AccessControlController.validateAccessMid(requestRights, request.pre, function(rights){
+    if(rights.status != 200)
+      return util.reply.error(rights.message, reply);
+    if(rights.result.access){
+      if(rights.result.viewLevel > 2){
+        console.log("In");
+        db.coworkingSpace.findOne({name: request.payload.coworkingSpaceName}).exec(function(err, coworking){
+          if(!coworking) return util.reply.error("coworkingSpace not found", reply);
+          console.log(coworking);
+          coworking.name = request.payload.name;
+          coworking.subdomain = request.payload.subdomain;
+          coworking.address = request.payload.address;
+          coworking.paymentSalts = request.payload.paymentSalts;
+          for(i=0;i<=coworking.logos.length;i++){
+            if(coworking.logos[i] == request.payload.logosName)
+              coworking.logos[i] = request.payload.logosValue;
+          }
+          if(request.payload.logosNewValue)
+            coworking.logos.push(request.payload.logosNewValue);
+          coworking.save(function (err, coworking) {
+              if (err) {
+                  util.logger.err("coworkingSpace", ["coworkingSpace save error", err]);
+                  util.reply.error(err, reply);
+              };
+              reply(coworking);
+          });
+        });
       }
     }else return util.reply.error("Unauthorized", reply);
   })
