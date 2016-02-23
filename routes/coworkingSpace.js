@@ -14,16 +14,16 @@ module.exports = function(){
       },
       handler: CoworkingSpaceController.getAmenities
     },
-    // {
-    //   method: 'POST',
-    //   path: BASE_URL + '/recharge/:amenitiesId',
-    //   config: {
-    //     pre: [
-    //       {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
-    //     ]
-    //   },
-    //   handler: CoworkingSpaceController.postAmenitiesRecharge
-    // },
+    {
+      method: 'POST',
+      path: BASE_URL + '/amenities/recharge',
+      config: {
+        pre: [
+          {method: AuthController.ensureAuthenticatedUser, assign: 'user'}
+        ]
+      },
+      handler: CoworkingSpaceController.userAmenitiesRecharge
+    },
     {
       method: 'POST',
       path: BASE_URL + '/amenities/add',

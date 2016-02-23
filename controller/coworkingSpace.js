@@ -142,7 +142,6 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
           if (err) return util.reply.error(err, reply);
           if (!coworking) return util.reply.error("Invalid coworkingSpace ID", reply);
           var amenitiesKey = request.payload.name;
-          var updatedValue = request.payload.value;
           if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
           coworking.amenities[amenitiesKey] = request.payload.value;
           coworking.save(function (err, coworking) {
@@ -159,7 +158,6 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
           if (err) return util.reply.error(err, reply);
           if (!coworking) return util.reply.error("Invalid coworkingSpace name", reply);
           var amenitiesKey = request.payload.amenitiesKey;
-          var updatedValue = request.payload.updatedValue;
           if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
           coworking.amenities[amenitiesKey] = request.payload.value;
           coworking.save(function (err, coworking) {
@@ -212,10 +210,8 @@ CoworkingSpaceController.prototype.updateCoworkingSpace = function(request, repl
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
       if(rights.result.viewLevel > 2){
-        console.log("In");
         db.coworkingSpace.findOne({name: request.payload.coworkingSpaceName}).exec(function(err, coworking){
           if(!coworking) return util.reply.error("coworkingSpace not found", reply);
-          console.log(coworking);
           coworking.name = request.payload.name;
           coworking.subdomain = request.payload.subdomain;
           coworking.address = request.payload.address;
@@ -238,5 +234,48 @@ CoworkingSpaceController.prototype.updateCoworkingSpace = function(request, repl
     }else return util.reply.error("Unauthorized", reply);
   })
 };
+
+CoworkingSpaceController.prototype.userAmenitiesRecharge = function(request, reply){
+  var requestRights = {
+    task : "RECH_AMENITY"
+  }
+  AccessControlController.validateAccessMid(requestRights, request.pre, function(rights){
+    if(rights.status != 200)
+     return util.reply.error(rights.message, reply);
+    if(rights.result.access){
+      if(request.pre.user.type == "OCO")
+        return util.reply.error("You do not have access for this operation", reply);
+      if(request.pre.user.type == 'ORG' || request.pre.user.type == 'COW'){
+        db.user.findById(request.pre.user._id).exec(function(err, user){
+          var name = request.payload.name;
+          if(!user.ballanceAmenities[name]) return util.reply.error("No such amenity found", reply);
+          user.ballanceAmenities[name] = user.ballanceAmenities[name] + Number(request.payload.value);;
+          user.save(function (err, user) {
+              if (err) {
+                  util.logger.err("user", ["ballanceAmenities save error in userAmenitiesRecharge", err]);
+                  util.reply.error(err, reply);
+              };
+              reply(user.ballanceAmenities);
+          });
+        })
+      }
+      if(request.pre.user.type == 'MGR' || request.pre.user.type == 'ADM'){
+        db.user.findOne({email: request.payload.email}).exec(function(err, user){
+          if(!user) return util.reply.error("User not found, enter correct email", reply);
+          var name = request.payload.name;
+          if(!user.ballanceAmenities[name]) return util.reply.error("No such amenity found", reply);
+          user.ballanceAmenities[name] = user.ballanceAmenities[name] + Number(request.payload.value);
+          user.save(function (err, user) {
+              if (err) {
+                  util.logger.err("user", ["ballanceAmenities save error in userAmenitiesRecharge", err]);
+                  util.reply.error(err, reply);
+              };
+              reply(user.ballanceAmenities);
+          });
+        });
+      }
+    }else return util.reply.error("Unauthorized", reply);
+  });
+}
 
 module.exports = new CoworkingSpaceController();
