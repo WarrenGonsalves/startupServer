@@ -15,9 +15,9 @@ CoworkingSpaceController.prototype.getAmenities = function(request, reply){
     if (rights.status != 200)
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
-      if(user.type == 'ORG' || user.type == 'COW')
+      if(rights.result.viewLevel == 2)
         var findUser = request.pre.user._id;
-      else if(user.type == 'OCO')
+      else if(rights.result.viewLevel == 1)
         var findUser = request.pre.user.orgUserId;
       else if(rights.result.viewLevel > 2)
         var findUser = request.query.user_id;
@@ -54,7 +54,7 @@ CoworkingSpaceController.prototype.addAmenities = function(request, reply){
         if(coworking.amenities){
           var amenities = coworking.amenities;
         }else var amenities = {};
-        if(amenities[name]) return util.reply.error("amenities already exists", reply);
+        if(amenities[name]) return util.reply.error("amenity already exists", reply);
         amenities[name] = request.payload.value;
         coworking.amenities = {};
         coworking.amenities = amenities;
@@ -86,7 +86,7 @@ CoworkingSpaceController.prototype.updateAmenities = function(request, reply){
         if (err) return util.reply.error(err, reply);
         if (!coworking) return util.reply.error("Invalid coworkingSpace ID", reply);
         var amenitiesKey = request.payload.name;
-        if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
+        if(!amenitiesKey) return util.reply.error("Amenity not found", reply);
         coworking.amenities[amenitiesKey] = request.payload.value;
         coworking.save(function (err, coworking) {
             if (err) {
@@ -158,7 +158,7 @@ CoworkingSpaceController.prototype.updateCoworkingSpace = function(request, repl
 
 CoworkingSpaceController.prototype.userAmenitiesRecharge = function(request, reply){
   var requestRights = {
-    task : "RECH_AMENITY"
+    task : "RECH_AMENITIES"
   }
   AccessControlController.validateAccessMid(requestRights, request.pre, function(rights){
     if(rights.status != 200)
