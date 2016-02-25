@@ -2,7 +2,6 @@ var db = require('../db');
 var _ = require('underscore');
 var util = require('../util');
 var AccessControlController = require('../controller/accessControl');
-var keys = require('object-keys');
 var assert = require('assert');
 
 function CoworkingSpaceController() {};

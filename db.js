@@ -19,3 +19,5 @@ exports.logger = models.logger;
 exports.plan = models.plan;
 exports.coworkingSpace = models.coworkingSpace;
 exports.accessControl = models.accessControl;
+exports.invoice = models.invoice;
+exports.counter = models.counter;

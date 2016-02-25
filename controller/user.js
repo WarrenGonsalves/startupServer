@@ -228,6 +228,65 @@ UserController.prototype.deleteUser = function(request, reply) {
 };
 
 
+UserController.prototype.addPlansToUserMid = function (data, userId, cb) {
+    addPlans(data, userId, function (data) {
+        
+        return cb(data);
+    })
+}
+
+function addPlans (data, userId, cb) {
+  console.log("in addPlans UserController")
+  console.log(pre.user.type)
+  // return cb({
+  //         message: "returned message value",
+  //         status: 200
+  //     }) 
+  if (!data.plans) return cb({message:"Plans needed", status: 400});
+
+  //add plans to user
+  db.user.findById(userId, function(err, user) {
+    if (err) return cb({message:err, status: 400});
+    for (var i = 0; i < data.plans.length; i++) {
+      var match = false;
+      for (var j = 0; j < user.plans.length; j++) {
+        if (user.plans[j].planId.equals(data.plans[i].id)){
+          user.plans[j].quantity += data.plans[i].quantity;
+          match = true;
+        }
+      }
+      if (!match) {
+        user.plans.push({
+          planId: data.plans[i].id,
+          quantity: data.plans[i].quantity
+        })
+      }
+    }
+    user.save(function (err, user_s) {
+      if (err) return cb({message:err, status: 400});
+    //call addAmenities to user
+        
+    })
+  })
+        
+}
+
+function addAmenities(data, userId, cb) {
+  console.log("in addAmenities UserController");
+  db.user.findById(userId, function(err, user) {
+    if (err) return cb({message:err, status: 400});
+    user.ballanceAmenities = {
+      coffee: data.amenities.coffee
+
+    }
+    user.save(function (err, user_s) {
+      if (err) return cb({message:err, status: 400});
+    //call addAmenities to user
+        
+    })
+  })
+}
+
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n) && n > -1;
 }

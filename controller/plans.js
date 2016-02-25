@@ -151,11 +151,41 @@ PlanController.prototype.selectPlan = function(request, reply) {
     task: "SEL_PLAN"
   }
   console.log("In PlanController selectPlan");
+  if (!request.payload.plans || request.payload.plans.length < 1) 
+    return util.reply.error("Need plan ID", reply);
 
   AccessControlController.validateAccessMid(requestRights, request.pre, function (rights) {
     if (rights.status != 200) return util.reply.error(rights.message, reply);
     if (rights.result.access) {
-      
+      var plans_arr = [];
+      for (var i = 0; i < request.payload.plans.length; i++) {
+        if (plans_arr.indexOf(request.payload.plans[i].id) > -1) {
+          return util.reply.error("Plans array cannot have duplicates", reply);
+          break;
+        }else if (request.payload.plans[i].count < 1) {
+          return util.reply.error("Invalid count", reply);
+        }else {
+          plans_arr.push(request.payload.plans[i].id);
+        }
+      }
+      db.plan.find({
+        '_id': { $in: plans_arr}
+      }, function(err, selectedPlans){
+        console.log(selectedPlans);
+        if (selectedPlans.length != request.payload.plans.length) 
+          return util.reply.error("Invalid plan Id", reply);
+        var amenities = {
+          coffee: 0,
+          seats: 0,
+          printerPaper: 0
+        };
+        for (var i = 0; i < selectedPlans.length; i++) {
+          var count = request.payload.plans[request.payload.plans.indexOf(selectedPlans[i]._id)].count;
+          amenities.coffee += selectedPlans[i].amenities.coffee * count;
+          amenities.seats += selectedPlans[i].amenities.seats * count;
+          amenities.printerPaper += selectedPlans[i].amenities.printerPaper * count;
+        }
+      });
     }else return util.reply.error("Unauthorized", reply);
     
   })

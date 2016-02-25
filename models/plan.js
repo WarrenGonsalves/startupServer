@@ -6,9 +6,9 @@ var bcrypt = require('bcrypt-nodejs');
 var planSchema = new Schema({
 	coworkingId: { type: mongoose.Schema.Types.ObjectId, ref: 'coworkingSpace'},
 	amenities: {
-	  coffee: String,
+	  coffee: Number,
 	  seats: {type:Number, default: 1},
-	  printerPaper: String
+	  printerPaper: Number
 	},
 	active: { type: Boolean, default: false },	//active, inactive
 	visibility: { type: Number, default: 3 }, // public = 1, private/manager = 3

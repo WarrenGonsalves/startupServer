@@ -37,7 +37,7 @@ AuthController.prototype.postLogin = {
     handler: function(request, reply) {
       console.log("login");
       if (!request.payload.key || !request.payload.password) 
-        return util.reply.authError('Wrong access credentials1', reply);
+        return util.reply.authError('Wrong access credentials', reply);
       var query_param = {};
       var key = request.payload.key;
       if (key.indexOf('@') > 0) {
@@ -51,7 +51,7 @@ AuthController.prototype.postLogin = {
       console.log(request.payload.password)
       db.user.findOne(query_param, '+password', function(err, user) {
         if (!user) {
-          return util.reply.authError('Wrong access credentials2', reply);
+          return util.reply.authError('Wrong access credentials', reply);
         }
         // console.log(user);
         // bcrypt.genSalt(10, function(err, salt) {
@@ -62,7 +62,7 @@ AuthController.prototype.postLogin = {
         // });
         user.comparePassword(request.payload.password, function(err, isMatch) {
           if (!isMatch) {
-            return util.reply.authError('Wrong access credentials3', reply);
+            return util.reply.authError('Wrong access credentials', reply);
           }
           else{
             console.log("LOGIN SUCCESS");
