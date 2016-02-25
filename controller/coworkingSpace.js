@@ -2,7 +2,6 @@ var db = require('../db');
 var _ = require('underscore');
 var util = require('../util');
 var AccessControlController = require('../controller/accessControl');
-var assert = require('assert');
 
 function CoworkingSpaceController() {};
 
@@ -21,11 +20,8 @@ CoworkingSpaceController.prototype.getAmenities = function(request, reply){
       else if(rights.result.viewLevel > 2)
         var findUser = request.query.user_id;
       db.user.findById(findUser).exec(function(err, user){
+        if (err) return util.reply.error(err, reply);
         if(!user.ballanceAmenities) return util.reply.error("ballanceAmenities null");
-        if (err) {
-          util.reply.error(err, reply);
-          return;
-        }
         reply({
           amenitiesList: user.ballanceAmenities
         });
@@ -108,6 +104,7 @@ CoworkingSpaceController.prototype.deleteAmenities = function(request, reply) {
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
       db.coworkingSpace.findById(request.pre.user.coworkingId).exec(function(err, coworking){
+        if (err) return util.reply.error(err, reply);
         var amenitiesKey = request.payload.name;
         if(!amenitiesKey) return util.reply.error("Amenities not found", reply);
         delete coworking.amenities[amenitiesKey];
@@ -132,6 +129,7 @@ CoworkingSpaceController.prototype.updateCoworkingSpace = function(request, repl
       return util.reply.error(rights.message, reply);
     if(rights.result.access){
       db.coworkingSpace.findById(request.query.coworkingId).exec(function(err, coworking){
+        if (err) return util.reply.error(err, reply);
         if(!coworking) return util.reply.error("coworkingSpace not found", reply);
         coworking.name = request.payload.name;
         coworking.subdomain = request.payload.subdomain;
@@ -168,7 +166,8 @@ CoworkingSpaceController.prototype.userAmenitiesRecharge = function(request, rep
       if(rights.result.viewLevel > 2)
         var findUser = request.query.user_id;
       db.user.findById(findUser).exec(function(err, user){
-        db.coworkingSpace.findById(request.query.coworkingId).exec(function(err, coworking){
+        db.coworkingSpace.findById(user.coworkingId).exec(function(err, coworking){
+          if (err) return util.reply.error(err, reply);
           if(!coworking) return util.reply.error("coworking not found", reply);
           var rechargedAmenities = Object.keys(request.payload.amenities);
           var amenities = coworking.amenities;
