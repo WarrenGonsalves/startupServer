@@ -17,15 +17,6 @@ UserController.prototype.getUserList = function(request, reply) {
     if (rights.status != 200) return util.reply.error(rights.message, reply);
     if (rights.result.access) {
       var query_param = {}
-
-      if (rights.result.viewLevel < 5) {
-        query_param['coworkingId'] = {$eq: request.pre.user.coworkingId};
-        if (rights.result.viewLevel < 3) {
-          query_param['orgUserId'] = {$eq: request.pre.user.orgUserId};
-        }
-      }else {
-        //all users
-      };
       
       db.user.find(query_param)
       .select("userName email phone")
@@ -40,74 +31,6 @@ UserController.prototype.getUserList = function(request, reply) {
         });
       }); 
       
-    }else return util.reply.error("Unauthorized", reply);
-    
-  })
-};
-
-UserController.prototype.addUser = function(request, reply) {
-  var requestRights;
-  var u_type;
-  if (request.payload.type === undefined) {
-      return util.reply.error("Invalid type", reply);
-  }else if (equest.payload.type === "OCO") {
-      u_type = "OCO";
-      requestRights = {
-        task: "INV_USER"
-      }
-  }else if (equest.payload.type === "COW") {
-      u_type = "COW"
-      requestRights = {
-        task: "ADD_USER"
-      }
-  }else 
-    return util.reply.error("Invalid type", reply);
-  console.log("In UserController addUser");
-
-  AccessControlController.validateAccessMid(requestRights, request.pre, function (rights) {
-    if (rights.status != 200) return util.reply.error(rights.message, reply);
-    if (rights.result.access) {
-      if (request.payload.userName === undefined)
-        return util.reply.error("Invalid username", reply);
-      if (request.payload.email === undefined || !validator.validate(request.payload.email))
-        return util.reply.error("Invalid email", reply);
-      if (request.payload.phone && !isNumber(request.payload.phone))
-        return util.reply.error("Invalid phone", reply);
-      
-      var u_coworkingId;
-      if (rights.result.viewLevel == 5) {           //admin
-        if (!request.payload.coworkingId)
-          return util.reply.error("Invalid coworkingId", reply);
-        if (request.payload.type === u_type && !request.payload.orgUserId)
-          return util.reply.error("Invalid orgUserId", reply);
-        u_coworkingId = request.payload.coworkingId;
-        u_orgUserId = request.payload.orgUserId;
-      } else if (rights.result.viewLevel == 3) {    //coworing space manager
-        u_coworkingId = request.pre.user.coworkingId;
-        if (u_type === "OCO" && !request.payload.orgUserId)
-          return util.reply.error("Invalid orgUserId", reply);
-        u_orgUserId = request.payload.orgUserId;
-      } else if (rights.result.viewLevel == 2 && u_type === "OCO") {    //organization account
-        u_coworkingId = request.pre.user.coworkingId;
-        u_orgUserId = request.pre.user.orgUserId;
-      }
-      var user = new db.user({
-          userName: request.payload.userName,
-          email: request.payload.email,
-          phone: request.payload.phone,
-          type: u_type,
-          coworkingId: u_coworkingId,
-          orgUserId: u_orgUserId
-      });
-
-      user.save(function (err, user) {
-          if (err) {
-              util.logger.err("user", ["user save error", err]);
-              util.reply.error(err, reply);
-          };
-          //send email to user
-          reply(user);
-      });
     }else return util.reply.error("Unauthorized", reply);
     
   })
@@ -227,65 +150,6 @@ UserController.prototype.deleteUser = function(request, reply) {
   })
 };
 
-
-UserController.prototype.addPlansToUserMid = function (data, userId, cb) {
-    addPlans(data, userId, function (data) {
-        
-        return cb(data);
-    })
-}
-
-function addPlans (data, userId, cb) {
-  console.log("in addPlans UserController")
-  console.log(pre.user.type)
-  // return cb({
-  //         message: "returned message value",
-  //         status: 200
-  //     }) 
-  if (!data.plans) return cb({message:"Plans needed", status: 400});
-
-  //add plans to user
-  db.user.findById(userId, function(err, user) {
-    if (err) return cb({message:err, status: 400});
-    for (var i = 0; i < data.plans.length; i++) {
-      var match = false;
-      for (var j = 0; j < user.plans.length; j++) {
-        if (user.plans[j].planId.equals(data.plans[i].id)){
-          user.plans[j].quantity += data.plans[i].quantity;
-          match = true;
-        }
-      }
-      if (!match) {
-        user.plans.push({
-          planId: data.plans[i].id,
-          quantity: data.plans[i].quantity
-        })
-      }
-    }
-    user.save(function (err, user_s) {
-      if (err) return cb({message:err, status: 400});
-    //call addAmenities to user
-        
-    })
-  })
-        
-}
-
-function addAmenities(data, userId, cb) {
-  console.log("in addAmenities UserController");
-  db.user.findById(userId, function(err, user) {
-    if (err) return cb({message:err, status: 400});
-    user.ballanceAmenities = {
-      coffee: data.amenities.coffee
-
-    }
-    user.save(function (err, user_s) {
-      if (err) return cb({message:err, status: 400});
-    //call addAmenities to user
-        
-    })
-  })
-}
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n) && n > -1;

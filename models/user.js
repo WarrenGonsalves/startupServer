@@ -8,9 +8,11 @@ var userSchema = new Schema({
     phone: Number,
     password: { type: String, select: false },
     address: String,
-    coworkingId: { type: mongoose.Schema.Types.ObjectId, ref: 'coworkingSpace'},
-    orgUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'user'},
+    picture: String,
+    facebookId: String,
+    googleId: String,
     email: { type: String,unique: true},
+    verificationCode: String,
     isAuth: {
         type: Boolean,
         default: false
@@ -19,16 +21,7 @@ var userSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    invoiceName: String,
-    type: { type: String, select: false },  //ADM, MGR, ORG, COW, OCO
-    plans: [{
-      planId: { type: mongoose.Schema.Types.ObjectId, ref: 'plan'},
-      quantity: Number
-    }],
-    ballanceAmenities: {
-      coffee: Number,
-      printerPages: Number
-    }
+    type: { type: String, select: false },  //ADM, USR
 
 })
 

@@ -10,6 +10,11 @@ module.exports = function() {
     },
     {
       method: 'POST',
+      path: BASE_URL + '/register',
+      config: AuthController.postRegister
+    },
+    {
+      method: 'POST',
       path: BASE_URL + '/changePassword',
       config: {
         pre: [
@@ -22,6 +27,21 @@ module.exports = function() {
       method: 'POST',
       path: BASE_URL + '/resetPassword',
       config: AuthController.resetPassword
+    },
+    {
+      method: 'POST',
+      path: BASE_URL + '/facebook',
+      config: AuthController.postFacebookLogin
+    },
+    {
+      method: 'POST',
+      path: BASE_URL + '/google',
+      config: AuthController.postGoogleLogin
+    },
+    {
+      method: 'POST',
+      path: BASE_URL + '/verify/{emailVerificationCode}',
+      config: AuthController.verifiyEmail
     }
   ];
 }();
